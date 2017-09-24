@@ -1,7 +1,8 @@
-// noinspection JSUnusedGlobalSymbols
 /**
  * @param {string} label
  * @param {boolean} deleteWhenBrowserCloses
+ * @param {function} compressor
+ * @param {function} decompressor
  * @return {{
  *      get: function,
  *      getOrDefault: function,
@@ -15,7 +16,7 @@
  * }}
  * @constructor
  */
-function BrowserStorage(label, deleteWhenBrowserCloses) {
+function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor) {
     var datatypes = {};
     var datatypeMap = {};
     var datatypeArr = [];
@@ -212,14 +213,14 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
     
     var val = storageObject.getItem(label);
     if (val !== null) {
-        valueString = val;
+        valueString = decompressor(val) || "";
         values = stringToObj(valueString);
     }
     
     var res = {
         get: function (key, disableCache) {
             if (disableCache) {
-                valueString = storageObject.getItem(label) || "";
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
                 values = stringToObj(valueString);
             }
             if (key in values) {
@@ -230,7 +231,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
         },
         getOrDefault: function (key, defaultVal, disableCache) {
             if (disableCache) {
-                valueString = storageObject.getItem(label) || "";
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
                 values = stringToObj(valueString);
             }
             if (key in values) {
@@ -241,7 +242,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
         },
         forEach: function (callback, disableCache) {
             if (disableCache) {
-                valueString = storageObject.getItem(label) || "";
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
                 values = stringToObj(valueString);
             }
             for (var k in values) if (values.hasOwnProperty(k)) {
@@ -251,13 +252,13 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
         },
         contains: function (key, disableCache) {
             if (disableCache) {
-                valueString = storageObject.getItem(label) || "";
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
                 values = stringToObj(valueString);
             }
             return key in values;
         },
         set: function (key, value) {
-            valueString = storageObject.getItem(label) || "";
+            valueString = decompressor(storageObject.getItem(label) || "") || "";
             values = stringToObj(valueString);
             
             var newValue = serializeData(value);
@@ -276,7 +277,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
                 valueNumber = oldLen + 1;
                 values[key] = newValue;
             }
-            storageObject.setItem(label, valueString);
+            storageObject.setItem(label, compressor(valueString));
             return res;
         },
         remove: function (key) {
@@ -286,7 +287,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
                 if (isEmpty(values)) {
                     storageObject.removeItem(label);
                 } else {
-                    storageObject.setItem(label, valueString);
+                    storageObject.setItem(label, compressor(valueString));
                 }
             }
             return res;
@@ -299,14 +300,14 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
         },
         isEmpty: function (disableCache) {
             if (disableCache) {
-                valueString = storageObject.getItem(label) || "";
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
                 values = stringToObj(valueString);
             }
             return isEmpty(values);
         },
         length: function (disableCache) {
             if (disableCache) {
-                valueString = storageObject.getItem(label) || "";
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
                 values = stringToObj(valueString);
             }
             return valueNumber;
