@@ -80,7 +80,7 @@ The file `lz-string by pieroxy.min.js` is a copy from pieroxy's <a href="https:/
 
 If you want, you can use another compression library instead, if it compiles strings into strings.
 
-## Caching
+## Caching and concurrency
 
 BrowserStorage caches all changes internally, which makes accessing values a lot faster. The problem here is that the cache might not be up to date, since `localStorage` and cookies can be accessed across tabs.
 
