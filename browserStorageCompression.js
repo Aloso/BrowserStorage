@@ -130,10 +130,10 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
         } else {
             // because of class inheritance, the first attempt might not be successful
             for (var i = 0; i < datatypeArr.length; i++) {
-                if (obj instanceof datatypeArr[i]) {
+                if (typeof datatypeArr[i] === "function" && obj instanceof datatypeArr[i]) {
                     var fn = datatypeArr[i];
                     c = datatypeMap[fn.name];
-                    return datatypes[c][0](obj);
+                    return c + datatypes[c][0](obj);
                 }
             }
             throw new Error("Missing serializer for object " + obj + " (type " + (typeof obj) + ")");
