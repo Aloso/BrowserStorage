@@ -175,6 +175,12 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
         // noinspection JSValidateTypes
         storageObject = window.sessionStorage;
     } else {
+        // compression doesn't work for cookies since they have to be encoded
+        // which cancels out the compression rate
+        compressor = decompressor = function (s) {
+            return s;
+        };
+        
         var expires = deleteWhenBrowserCloses ? "" : ";expires=" + new Date(+new Date() + 30758400000);
         
         storageObject = {
