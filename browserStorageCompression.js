@@ -1,20 +1,24 @@
+"use strict";
+
 /**
  * @param {string} label
  * @param {boolean} deleteWhenBrowserCloses
- * @param {function} compressor
- * @param {function} decompressor
+ * @param {function(string)} compressor
+ * @param {function(string)} decompressor
  * @return {{
- *      get: function,
- *      getOrDefault: function,
- *      forEach: function,
- *      contains: function,
- *      set: function,
- *      remove: function,
- *      clear: function,
- *      isEmpty: function,
- *      length: function
+ *      get: function(string, boolean=false),
+ *      getOrDefault: function(string, *, boolean=false),
+ *      getOrElse: function(string, function(string), boolean=false),
+ *      forEach: function(function(string, *, boolean=false)),
+ *      contains: function(boolean=false),
+ *      set: function(string, *),
+ *      remove: function(string),
+ *      clear: function(),
+ *      isEmpty: function(boolean=false),
+ *      length: function(boolean=false),
+ *      addListener: function(function(Event)),
+ *      removeListener: function(function(Event))
  * }}
- * @constructor
  */
 function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor) {
     var datatypes = {};
@@ -158,8 +162,36 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
         }
     }
     
+    function cbAddEventListener(obj, evt, fnc) {
+        if (obj.addEventListener) {
+            // W3C model
+            obj.addEventListener(evt, fnc, false);
+            return true;
+        } else if (obj.attachEvent) {
+            // Microsoft model
+            return obj.attachEvent('on' + evt, fnc);
+        } else {
+            // Browser don't support W3C or MSFT model, go on with traditional
+            evt = 'on'+evt;
+            if (typeof obj[evt] === 'function') {
+                // Object already has a function on traditional
+                // Let's wrap it with our own function inside another function
+                fnc = (function(f1, f2){
+                    return function() {
+                        f1.apply(this, arguments);
+                        f2.apply(this, arguments);
+                    }
+                })(obj[evt], fnc);
+            }
+            obj[evt] = fnc;
+            return true;
+        }
+    }
+    
+    var changeListeners = [];
+    
     /**
-     * @type {{
+     * @type {Storage|{
          *      getItem: function(string),
          *      setItem: function(string, string),
          *      removeItem: function(string),
@@ -169,11 +201,25 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
     var storageObject;
     
     if (window.localStorage && !deleteWhenBrowserCloses) {
-        // noinspection JSValidateTypes
         storageObject = window.localStorage;
+        
+        cbAddEventListener(window, "storage", function (e) {
+            if (e.key === label) {
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
+                values = stringToObj(valueString);
+                for (var i = 0; i < changeListeners.length; i++) changeListeners[i](e);
+            }
+        });
     } else if (window.sessionStorage && deleteWhenBrowserCloses) {
-        // noinspection JSValidateTypes
         storageObject = window.sessionStorage;
+        
+        cbAddEventListener(window, "storage", function (e) {
+            if (e.key === label) {
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
+                values = stringToObj(valueString);
+                for (var i = 0; i < changeListeners.length; i++) changeListeners[i](e);
+            }
+        });
     } else {
         // compression doesn't work for cookies since they have to be encoded
         // which cancels out the compression rate
@@ -219,7 +265,11 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
     
     var val = storageObject.getItem(label);
     if (val !== null) {
-        valueString = decompressor(val) || "";
+        if (val.charCodeAt(0) > 256 || !("LZString" in window)) {
+            valueString = decompressor(val) || "";
+        } else {
+            valueString = val;
+        }
         values = stringToObj(valueString);
     }
     
@@ -246,6 +296,18 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
                 return defaultVal;
             }
         },
+        getOrElse: function (key, callback, disableCache) {
+            if (disableCache) {
+                valueString = decompressor(storageObject.getItem(label) || "") || "";
+                values = stringToObj(valueString);
+            }
+            if (key in values) {
+                return deserializeData(values[key]);
+            } else {
+                return callback(key);
+            }
+        },
+        
         forEach: function (callback, disableCache) {
             if (disableCache) {
                 valueString = decompressor(storageObject.getItem(label) || "") || "";
@@ -256,6 +318,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
             }
             return res;
         },
+        
         contains: function (key, disableCache) {
             if (disableCache) {
                 valueString = decompressor(storageObject.getItem(label) || "") || "";
@@ -263,6 +326,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
             }
             return key in values;
         },
+        
         set: function (key, value) {
             valueString = decompressor(storageObject.getItem(label) || "") || "";
             values = stringToObj(valueString);
@@ -307,6 +371,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
             valueString = "";
             return res;
         },
+        
         isEmpty: function (disableCache) {
             if (disableCache) {
                 valueString = decompressor(storageObject.getItem(label) || "") || "";
@@ -320,6 +385,18 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
                 values = stringToObj(valueString);
             }
             return valueNumber;
+        },
+        
+        addListener: function (callback) {
+            return changeListeners.push(callback);
+        },
+        removeListener: function (callback) {
+            for (var i = 0; i < changeListeners.length; i++) {
+                if (changeListeners[i] === callback) {
+                    changeListeners.splice(i, 1);
+                    return res;
+                }
+            }
         }
     };
     return res;
