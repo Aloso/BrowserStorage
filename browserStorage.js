@@ -280,6 +280,9 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
             return res;
         },
         remove: function (key) {
+            valueString = storageObject.getItem(label) || "";
+            values = stringToObj(valueString);
+            
             if (key in values) {
                 delete values[key];
                 valueString = objToString(values);
