@@ -79,3 +79,34 @@ Note: In cookie mode, compression is disabled: Cookies are encoded with `encodeU
 The file `lz-string by pieroxy.min.js` is a copy from pieroxy's <a href="https://github.com/pieroxy/lz-string">GitHub page</a>.
 
 If you want, you can use another compression library instead, if it compiles strings into strings.
+
+## Caching
+
+BrowserStorage caches all changes internally, which makes accessing values a lot faster. The problem here is that the cache might not be up to date, since `localStorage` and cookies can be accessed across tabs.
+
+Here is a list of all BrowserStorage functions that use cached values by default:
+
+  * `get(key)`
+  * `getOrDefault(key, defaultVal)`
+  * `forEach(callback)`
+  * `contains()`
+  * `isEmpty()`
+  * `length()`
+
+Each of these functions has an additional, optional argument `disableCache`. Setting it to `true` makes sure that the cache is updated and the returned value is up to date:
+
+```javascript
+var len = storage.length(true);
+var str = storage.get("foo");   // Here, diableCache is not necessary
+                                // because the cache is already up to date
+```
+
+Another possibility is to update the cache periodically:
+
+```javascript
+setInterval(function() {
+    storage.contains("", true); // update the cache every 2 seconds
+}, 2000);
+```
+
+Note that **data loss** due to concurrent modifications is not possible: The functions `set(key,value)`, `remove(key)` and `clear()` always update the cache before modifying the storage.
