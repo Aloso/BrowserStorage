@@ -6,7 +6,7 @@ With this small library, you can store any values in the browser, ***not just st
 Include the script somewhere in your html file:
 
 ```html
-<script type="text/javascript" src="browserStorage.min.js"></script>
+<script type="text/javascript" src="browserStorage.js"></script>
 ```
 
 ## Usage
@@ -14,7 +14,7 @@ Include the script somewhere in your html file:
 ```javascript
 // myValues is the localStorage entry/cookie under which everything is stored.
 // if the 2nd parameter is true, sessionStorage or a session cookie is used instead
-var storage = new BrowserStorage("myValues", false);
+var storage = BrowserStorage("myValues", false); // don't use 'new'
 
 storage.set("hello", "world")
        .set("time", new Date())
@@ -45,6 +45,10 @@ storage.getOrDefault("unset", "foo")    // "foo"
 Here are some more useful functions:
 
 ```javascript
+storage.getOrElse("unset", function(key) {
+  console.log(key + " does not exist!");
+})                           // Returns a value; if it doesn't exist, calls a function
+
 storage.forEach(function(key, value) {
   //do something
 })                           // Iterates over all entries; chainable
@@ -57,6 +61,19 @@ storage.isEmpty()            // Returns whether or not the storage is empty
 ```
 
 Note: You can use multiple _BrowserStorage_ instances on one website, if you name them differently. Clearing one storage does not affect the others.
+
+## Events
+
+When the storage was modified in a different tab, browsers that support `localStorage` and `sessionStorage` trigger a `storage` event. BrowserStorage instances listen to the events and check if their storage is affected. If it is, they execute all registered event listeners.
+
+To add or remove an event listener, use the functions `addListener(callback)` and `removeListener(callback)`:
+
+```javascript
+storage.addListener(function(e) {
+   // update view, etc.
+   console.log("Storage modified! New value: " + storage.getOrDefault("foo", "bar"));
+});
+```
 
 ## Compression
 
@@ -71,7 +88,7 @@ To use the compression algorithm:
 
 ```javascript
 // the last two arguments are the functions that compress/decompress a string
-var store = new BrowserStorage("myValues", false, LZString.compress, LZString.decompress);
+var storage = BrowserStorage("myValues", false, LZString.compress, LZString.decompress);
 ```
 
 Note: In cookie mode, compression is disabled: Cookies are encoded with `encodeURIComponent()`, and this would cancel out the compression.
@@ -80,14 +97,15 @@ The file `lz-string by pieroxy.min.js` is a copy from pieroxy's <a href="https:/
 
 If you want, you can use another compression library instead, if it compiles strings into strings.
 
-## Caching and concurrency
+## Cookies, Caching and Concurrency
 
-BrowserStorage caches all changes internally, which makes accessing values a lot faster. The problem here is that the cache might not be up to date, since `localStorage` and cookies can be accessed across tabs.
+BrowserStorage caches all changes internally, which makes accessing values a lot faster. The problem here is that the cache might not be up to date if **cookies** are used and the storage is accessed from **multiple tabs**.
 
 Here is a list of all BrowserStorage functions that use cached values by default:
 
   * `get(key)`
   * `getOrDefault(key, defaultVal)`
+  * `getOrElse(key, callback)`
   * `forEach(callback)`
   * `contains()`
   * `isEmpty()`
@@ -97,8 +115,8 @@ Each of these functions has an additional, optional argument `disableCache`. Set
 
 ```javascript
 var len = storage.length(true);
-var str = storage.get("foo");   // Here, diableCache is not necessary
-                                // because the cache is already up to date
+var str = storage.get("foo");   // Here, disableCache is not necessary
+                                // because the cache has already been updated
 ```
 
 Another possibility is to update the cache periodically:
@@ -106,7 +124,13 @@ Another possibility is to update the cache periodically:
 ```javascript
 setInterval(function() {
     storage.contains("", true); // update the cache every 2 seconds
-}, 2000);
+}, 1000);
 ```
 
-Note that **data loss** due to concurrent modifications is not possible: The functions `set(key,value)`, `remove(key)` and `clear()` always update the cache before modifying the storage.
+**Data loss** due to concurrent modifications is not possible: The functions `set(key,value)`, `remove(key)` and `clear()` always update the cache before modifying the storage.
+
+### Advice
+
+Don't update the cache too often where performance is critical, especially if compression is enabled! From my experience, it is not important that the storage is up to date in most cases.
+
+Apart from that, all modern browser support `localStorage` and `sessionStorage`, so BrowserStorage is _always_ up to date thanks to `storage` events.
