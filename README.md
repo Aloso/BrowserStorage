@@ -62,6 +62,12 @@ If `localStorage`/`sessionStorage` is supported by the browser, these events are
 
 ## Compression
 
+<table><tr><td>
+
+**Warning**: Don't use this feature in production yet! It seems that some browsers, like Firefox, have problems with Unicode characters in `localStorage`.
+
+</td></tr></table>
+
 Since `localStorage` and `sessionStorage` are limited to 5 MB, it can be necessary to **compress** the stored data. With BrowserStorage, it's very easy -- just include `browserStorageCompression.js` and `lz-string by pieroxy.min.js` in your html:
 
 ```html
