@@ -58,6 +58,8 @@ storage.addListener(function(e) {
 });
 ```
 
+If `localStorage`/`sessionStorage` is supported by the browser, these events are triggered _immediately_. Otherwise, they are triggered up to 500 milliseconds late, because BrowserStorage has to check every half second if there was a modification.
+
 ## Compression
 
 Since `localStorage` and `sessionStorage` are limited to 5 MB, it can be necessary to **compress** the stored data. With BrowserStorage, it's very easy -- just include `browserStorageCompression.js` and `lz-string by pieroxy.min.js` in your html:
@@ -77,29 +79,3 @@ var storage = BrowserStorage("myValues", false, LZString.compress, LZString.deco
 The file `lz-string by pieroxy.min.js` is a copy from pieroxy's <a href="https://github.com/pieroxy/lz-string">GitHub page</a>.
 
 You can use another compression library instead, but some features are only supported incombination with LZString.
-
-## Cookies, Caching and Concurrency
-
-BrowserStorage caches all changes internally, which makes accessing values a lot faster, especially if compression is enabled. This is no problem if `localStorage` or `sessionStorage` is used, because then the BrowserStorage object receives an event whenever it is modified by a different browser tab, so it can update the cache.
-
-For cookies, these events don't exist. If cookies are used, BrowserStorage checks twice every second if the storage was modified. This means that cached values can be up to 500 milliseconds **out of date**.
-
-The following functions use cached values by default:
-
-  * `get(key)`
-  * `getOrDefault(key, defaultVal)`
-  * `getOrElse(key, callback)`
-  * `forEach(callback)`
-  * `contains()`
-  * `isEmpty()`
-  * `length()`
-
-Each of these functions has an additional, optional argument `disableCache`. Setting it to `true` makes sure that the cache is updated so the returned value is up to date:
-
-```javascript
-var str = storage.get("foo", true);
-var len = storage.length();  // Here, disableCache is not necessary
-                             // because the cache has already been updated
-```
-
-**Data loss** due to concurrent modifications is not possible: The functions `set(key,value)`, `remove(key)` and `clear()` always update the cache before modifying the storage.
