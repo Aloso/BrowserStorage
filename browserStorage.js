@@ -251,7 +251,16 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
                     document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
                 }
             }
-        }
+        };
+    
+        setInterval(function () {
+            var newStr = storageObject.getItem(label) || "";
+            if (newStr !== valueString) {
+                valueString = newStr;
+                values = stringToObj(valueString);
+                for (var i = 0; i < changeListeners.length; i++) changeListeners[i]();
+            }
+        }, 500);
     }
     
     var val = storageObject.getItem(label);
@@ -352,7 +361,7 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
             return res;
         },
         clear: function () {
-            storageObject.clear();
+            storageObject.removeItem(label);
             values = {};
             valueString = "";
             return res;
@@ -374,15 +383,16 @@ function BrowserStorage(label, deleteWhenBrowserCloses) {
         },
         
         addListener: function (callback) {
-            return changeListeners.push(callback);
+            changeListeners.push(callback);
+            return res;
         },
         removeListener: function (callback) {
             for (var i = 0; i < changeListeners.length; i++) {
                 if (changeListeners[i] === callback) {
                     changeListeners.splice(i, 1);
-                    return res;
                 }
             }
+            return res;
         }
     };
     return res;
