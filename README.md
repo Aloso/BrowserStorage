@@ -64,7 +64,7 @@ If `localStorage`/`sessionStorage` is supported by the browser, these events are
 
 <table><tr><td>
 
-**Warning**: Don't use this feature in production yet! It seems that some browsers, like Firefox, have problems with Unicode characters in `localStorage`.
+**Warning**: Sometimes LZMA-compressed data stored in Firefox gets corrupted after a restart. This is due to a bug described here: [https://github.com/pieroxy/lz-string/issues/59](Firefox silently corrupts LZString encoded data on browser restart). I don't know if this is still an issue in the latest Firefox version, still you should disable compression in Firefox or use a weaker compression method with readable output.
 
 </td></tr></table>
 
