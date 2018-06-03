@@ -101,9 +101,9 @@ If `localStorage`/`sessionStorage` is supported by the browser, these events are
 
 ## Compression
 
-<aside class="notice">
-**Warning**: Sometimes LZMA-compressed data stored in Firefox gets corrupted after a restart. This is due to a bug described here: https://github.com/pieroxy/lz-string/issues/59. I don't know if this is still an issue in the latest Firefox version, still you should disable compression in Firefox or use a weaker compression method with readable output.
-</aside>
+<p class="warning">
+:exclamation: **Warning** :exclamation: Sometimes LZMA-compressed data stored in Firefox gets corrupted after a restart. This is due to a bug described here: https://github.com/pieroxy/lz-string/issues/59. I don't know if this is still an issue in the latest Firefox version, still you should disable compression in Firefox or use a weaker compression method with readable output.
+</p>
 
 Since `localStorage` and `sessionStorage` are limited to 5 MB, it can be necessary to **compress** the stored data. With BrowserStorage, it's very easy -- just include `browserStorageCompression.js` and `lz-string by pieroxy.min.js` in your html:
 
@@ -125,4 +125,4 @@ The file `lz-string by pieroxy.min.js` is a copy from <a href="https://github.co
 
 ## API documentation
 
-The documentation can be found [here](https://github.com/Aloso/BrowserStorage/wiki);
+The documentation can be found [here](https://github.com/Aloso/BrowserStorage/wiki).
