@@ -85,8 +85,3 @@ var storage = BrowserStorage("myValues", false, LZString.compress, LZString.deco
 The file `lz-string by pieroxy.min.js` is a copy from pieroxy's <a href="https://github.com/pieroxy/lz-string">GitHub page</a>.
 
 You can use another compression library instead, but some features are only supported incombination with LZString.
-
-## TODO
-
-* Find out why decompressed strings sometimes contain mistakes
-* Make use LZString's `compressToEncodedURIComponent()` function
