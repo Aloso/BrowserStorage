@@ -58,23 +58,27 @@ storage.isEmpty()            // Returns whether or not the storage is empty
 
 Sometimes you might want to store other data types than the predefined ones, and JSON doesn't suffice. Here's a simple example:
 
-    class Point {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-        }
-        toString() {
-            return this.x + "," + this.y;
-        }
-        static fromString(s) {
-            s = s.split(",");
-            return new Point(+s[0], +s[1]);
-        }
+```javascript
+class Point {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
     }
+    toString() {
+        return this.x + "," + this.y;
+    }
+    static fromString(s) {
+        s = s.split(",");
+        return new Point(+s[0], +s[1]);
+    }
+}
+```
 
 To be able to store `Point`s in the storage, you have to tell BrowserStorage how to (de)serialize them:
 
-    storage.addType(50, Point, p => p.toString(), Point.fromString);
+```javascript
+storage.addType(50, Point, p => p.toString(), Point.fromString);
+```
 
 This method requires the following parameters:
 
