@@ -1,6 +1,14 @@
 # BrowserStorage
 With this small library, you can store any values in the browser, ***not just strings***. It uses `localStorage`/`sessionStorage` by default and cookies as fallback. It automatically converts **numbers, booleans, JSON objects, dates** and the values **null** and **undefined** into string representations and converts them back when they're queried:
 
+## Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Custom types](#custom-types)
+- [Events](#events)
+- [Compression](#compression)
+
 ## Installation
 
 Include the script somewhere in your html file:
@@ -46,6 +54,35 @@ storage.length()             // Returns the number of entries
 storage.isEmpty()            // Returns whether or not the storage is empty
 ```
 
+## Custom types
+
+Sometimes you might want to store other data types than the predefined ones, and JSON doesn't suffice. Here's a simple example:
+
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        toString() {
+            return this.x + "," + this.y;
+        }
+        static fromString(s) {
+            s = s.split(",");
+            return new Point(+s[0], +s[1]);
+        }
+    }
+
+To be able to store `Point`s in the storage, you have to tell BrowserStorage how to (de)serialize them:
+
+    storage.addType(50, Point, p => p.toString(), Point.fromString);
+
+This method requires the following parameters:
+
+1. A unique ID >= 50
+2. The constructor of the type. The constructor's name must be unique
+3. A serializer function that returns a string
+4. A deserializer function that returns the original value when given a string
+
 ## Events
 
 BrowserStorage triggers an event when the storage is modified **in a different browser tab**. This only works in browsers that support `localStorage`/`sessionStorage`.
@@ -59,6 +96,7 @@ storage.addListener(function(e) {
 ```
 
 If `localStorage`/`sessionStorage` is supported by the browser, these events are triggered _immediately_. Otherwise, they are triggered up to 500 milliseconds late, because BrowserStorage has to check every half second if there was a modification.
+
 
 ## Compression
 
