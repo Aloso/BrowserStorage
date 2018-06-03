@@ -65,19 +65,20 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
         valueNumber = n;
         return res.join("%a");
     }
-    
+
     /**
      * @param {function} type
      * @param {function} serializer
      * @param {function} deserializer
+     * @param {String} [id]
      */
-    function addDataType(type, serializer, deserializer) {
+    function addDataType(type, serializer, deserializer, id) {
         if (typeof type !== 'function' || typeof serializer !== 'function' || typeof deserializer !== 'function') {
             var badType = typeof type !== 'function' ? typeof type :
                     typeof serializer !== 'function' ? typeof serializer : typeof deserializer;
             throw new Error("TypeError: expected type function, found " + badType);
         }
-        var c = String.fromCharCode(++datatypesPool);
+        var c = id == null ? String.fromCharCode(++datatypesPool) : id;
         datatypes[c] = [serializer, deserializer];
         // noinspection JSUnresolvedVariable
         datatypeMap[type.name] = c;
@@ -407,6 +408,16 @@ function BrowserStorage(label, deleteWhenBrowserCloses, compressor, decompressor
                 }
             }
             return res;
+        },
+
+        addType: function (identifier, type, serialize, deserialize) {
+            if (isNaN(identifier) || identifier < 50) {
+                throw new Error("Identifier must be a number >= 50");
+            }
+            if (datatypes[identifier]) {
+                throw new Error("This ID is already in use");
+            }
+            addDataType(type, serialize, deserialize, String.fromCharCode(identifier));
         }
     };
     return res;
